@@ -33,7 +33,8 @@ def main() -> int:
     for i, lead in enumerate(leads, 1):
         print(f"{i}. {lead.company.name}（{lead.industry}，{lead.company.scale}）")
         print(f"   综合分 {lead.total_score} | {lead.reason}")
-        print(f"   匹配 {lead.scores['行业匹配度']} / 采购 {lead.scores['采购能力']} / 渠道 {lead.scores['渠道价值']}\n")
+        print(f"   匹配 {lead.scores['行业匹配度']} / 采购 {lead.scores['采购能力']} / 渠道 {lead.scores['渠道价值']}")
+        print(f"   触达话术：{lead.outreach}\n")
     return 0
 
 

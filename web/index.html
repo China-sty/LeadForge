@@ -5,33 +5,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LeadForge · AI 获客看板</title>
 <style>
-  :root { --bg:#f5f6f8; --card:#fff; --primary:#4f46e5; --text:#1f2329; --muted:#8a919c; --grid:#e7eaf0; --ink:#5b6470; --good:#1a9c5b; }
+  :root { --bg:#f5f6f8; --card:#fff; --primary:#4f46e5; --text:#1f2329; --muted:#8a919c; --ink:#5b6470; --good:#1a9c5b; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); }
-  .wrap { max-width:960px; margin:0 auto; padding:24px 16px; }
+  .wrap { max-width:1000px; margin:0 auto; padding:24px 16px; }
   header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
   h1 { font-size:22px; margin:0; }
   .sub { color:var(--muted); font-size:13px; margin-top:4px; }
-  button { padding:11px 20px; border:none; border-radius:8px; background:var(--primary); color:#fff; font-size:14px; cursor:pointer; }
+  button { padding:10px 16px; border:none; border-radius:8px; background:var(--primary); color:#fff; font-size:14px; cursor:pointer; }
+  button.ghost { background:#eef1f6; color:var(--text); }
   button:disabled { background:#b9c4e6; cursor:not-allowed; }
-  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px; }
-  .stat { background:var(--card); border-radius:12px; padding:18px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
-  .stat .num { font-size:32px; font-weight:700; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:18px; }
+  .stat { background:var(--card); border-radius:12px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .stat .num { font-size:30px; font-weight:700; }
   .stat .label { color:var(--muted); font-size:13px; }
   .panel { background:var(--card); border-radius:12px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.06); margin-bottom:18px; }
   .panel h2 { font-size:16px; margin:0 0 14px; }
+  .funnel { display:flex; gap:8px; flex-wrap:wrap; }
+  .fstep { flex:1; min-width:80px; text-align:center; padding:12px 6px; background:#f4f5f9; border-radius:8px; }
+  .fstep .n { font-size:22px; font-weight:700; color:var(--primary); }
+  .fstep .l { font-size:12px; color:var(--muted); }
   .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-  .bar-name { width:80px; font-size:13px; text-align:right; flex-shrink:0; }
+  .bar-name { width:90px; font-size:13px; text-align:right; flex-shrink:0; }
   .bar-track { flex:1; height:10px; background:#eef0f3; border-radius:5px; overflow:hidden; }
   .bar-fill { height:100%; background:var(--primary); border-radius:5px; }
-  .bar-count { width:30px; font-size:13px; color:var(--ink); }
+  .bar-count { width:40px; font-size:13px; color:var(--ink); }
   table { width:100%; border-collapse:collapse; font-size:13px; }
-  th,td { text-align:left; padding:10px 12px; border-bottom:1px solid #eef0f3; }
+  th,td { text-align:left; padding:9px 10px; border-bottom:1px solid #eef0f3; }
   th { color:var(--muted); font-weight:500; }
   .score { font-weight:700; }
   .score.high { color:var(--good); }
   .reason { color:var(--muted); font-size:12px; }
+  select { padding:5px 8px; border:1px solid #d5d9e0; border-radius:6px; font-size:13px; }
+  .outreach { background:#fafbff; border-left:3px solid var(--primary); padding:10px 12px; margin-top:6px; border-radius:4px; white-space:pre-wrap; font-size:13px; color:var(--ink); }
+  .enq-row { display:flex; gap:8px; margin-top:8px; }
+  .enq-row input { flex:1; padding:8px; border:1px solid #d5d9e0; border-radius:6px; font-size:13px; }
+  .quote { margin-top:8px; padding:10px; background:#f4f5f9; border-radius:6px; font-size:13px; white-space:pre-wrap; }
   .hint { color:var(--muted); text-align:center; padding:30px 0; }
+  .rec { font-size:14px; line-height:1.7; }
 </style>
 </head>
 <body>
@@ -41,7 +52,10 @@
       <h1>LeadForge · AI 获客看板</h1>
       <div class="sub" id="configSub">加载中…</div>
     </div>
-    <button id="mineBtn" onclick="mine()">开始挖掘</button>
+    <div>
+      <button class="ghost" onclick="window.open('/landing','_blank')">官网预览</button>
+      <button id="mineBtn" onclick="mine()">开始挖掘</button>
+    </div>
   </header>
 
   <div class="cards">
@@ -51,14 +65,20 @@
   </div>
 
   <div class="panel">
-    <h2>行业分布</h2>
-    <div id="industries"><div class="hint">暂无数据</div></div>
+    <h2>转化漏斗</h2>
+    <div class="funnel" id="funnel"></div>
+  </div>
+
+  <div class="panel">
+    <h2>聚焦分析</h2>
+    <div class="rec" id="focusRec">暂无数据</div>
+    <div id="focusBars" style="margin-top:12px"></div>
   </div>
 
   <div class="panel">
     <h2>目标客户列表</h2>
     <table>
-      <thead><tr><th>公司</th><th>行业</th><th>规模</th><th>匹配</th><th>采购</th><th>渠道</th><th>综合分</th><th>判断理由</th></tr></thead>
+      <thead><tr><th>公司</th><th>行业</th><th>规模</th><th>综合分</th><th>阶段</th><th></th></tr></thead>
       <tbody id="tbody"></tbody>
     </table>
     <div id="empty" class="hint">点击右上角「开始挖掘」获取目标客户</div>
@@ -66,54 +86,81 @@
 </div>
 
 <script>
+const STAGES = ["待触达","已触达","已回复","报价中","打样中","已成交"];
+let leadsCache = [];
+
 async function loadConfig(){
-  const r = await fetch('/api/config'); const c = await r.json();
+  const c = await fetch('/api/config').then(r=>r.json());
   document.getElementById('configSub').textContent = `${c.enterprise} · ${c.products.join('、')} · 目标行业：${c.keywords.join('、')}`;
 }
 async function load(){
-  const [s, l] = await Promise.all([fetch('/api/stats').then(r=>r.json()), fetch('/api/leads').then(r=>r.json())]);
+  const [s, l, f] = await Promise.all([
+    fetch('/api/stats').then(r=>r.json()), fetch('/api/leads').then(r=>r.json()), fetch('/api/focus').then(r=>r.json())
+  ]);
+  leadsCache = l;
   document.getElementById('total').textContent = s.total;
   document.getElementById('high').textContent = s.high_value;
   document.getElementById('avg').textContent = s.avg_score;
-  renderIndustries(s.industries);
+  renderFunnel(s.funnel);
+  renderFocus(f);
   renderLeads(l);
 }
-function renderIndustries(inds){
-  const box = document.getElementById('industries');
-  const entries = Object.entries(inds).sort((a,b)=>b[1]-a[1]);
-  if(!entries.length){ box.innerHTML = '<div class="hint">暂无数据</div>'; return; }
-  const max = entries[0][1];
-  box.innerHTML = entries.map(([name,count]) => `
-    <div class="bar-row">
-      <span class="bar-name">${name}</span>
-      <div class="bar-track"><div class="bar-fill" style="width:${(count/max*100).toFixed(0)}%"></div></div>
-      <span class="bar-count">${count}</span>
-    </div>`).join('');
+function renderFunnel(funnel){
+  const box = document.getElementById('funnel');
+  box.innerHTML = STAGES.map(st => `<div class="fstep"><div class="n">${funnel[st]||0}</div><div class="l">${st}</div></div>`).join('');
+}
+function renderFocus(f){
+  document.getElementById('focusRec').textContent = f.recommendation || '';
+  const box = document.getElementById('focusBars');
+  const s = f.summary || [];
+  if(!s.length){ box.innerHTML=''; return; }
+  const max = Math.max(...s.map(x=>x.avg_score));
+  box.innerHTML = s.map(x => `
+    <div class="bar-row"><span class="bar-name">${x.industry}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${(x.avg_score/max*100).toFixed(0)}%"></div></div>
+      <span class="bar-count">${x.avg_score}分</span></div>`).join('');
 }
 function renderLeads(leads){
   const tbody = document.getElementById('tbody');
-  document.getElementById('empty').style.display = leads.length ? 'none':'block';
+  document.getElementById('empty').style.display = leads.length?'none':'block';
   tbody.innerHTML = leads.map(l => `
-    <tr>
-      <td>${l.company_name}</td>
-      <td>${l.industry||'-'}</td>
-      <td>${l.scale||'-'}</td>
-      <td>${l.match_score!=null?l.match_score.toFixed(0):'-'}</td>
-      <td>${l.capability_score!=null?l.capability_score.toFixed(0):'-'}</td>
-      <td>${l.channel_score!=null?l.channel_score.toFixed(0):'-'}</td>
+    <tr id="row-${l.id}">
+      <td><a href="javascript:void(0)" onclick="toggleDetail(${l.id})">${l.company_name}</a></td>
+      <td>${l.industry||'-'}</td><td>${l.scale||'-'}</td>
       <td class="score ${l.total_score>=60?'high':''}">${l.total_score.toFixed(1)}</td>
-      <td class="reason">${l.reason||''}</td>
-    </tr>`).join('');
+      <td><select onchange="setStage(${l.id}, this.value)">
+        ${STAGES.map(st=>`<option ${l.stage===st?'selected':''}>${st}</option>`).join('')}
+      </select></td>
+      <td><button class="ghost" onclick="toggleDetail(${l.id})">详情</button></td>
+    </tr>
+    <tr id="detail-${l.id}" style="display:none"><td colspan="6">
+      <div class="reason">匹配${l.match_score?.toFixed(0)||'-'} / 采购${l.capability_score?.toFixed(0)||'-'} / 渠道${l.channel_score?.toFixed(0)||'-'} · ${l.reason||''}</div>
+      <div class="outreach">${l.outreach||'（无话术）'}</div>
+      <div class="enq-row"><input id="enq-${l.id}" placeholder="输入客户询盘，AI 生成回复+报价…">
+        <button onclick="enquiry(${l.id})">询盘</button></div>
+      <div class="quote" id="quote-${l.id}"></div>
+    </td></tr>`).join('');
+}
+function toggleDetail(id){
+  const el = document.getElementById('detail-'+id);
+  el.style.display = el.style.display==='none'?'table-row':'none';
+}
+async function setStage(id, stage){
+  await fetch(`/api/leads/${id}/stage`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({stage})});
+  load();
+}
+async function enquiry(id){
+  const msg = document.getElementById('enq-'+id).value;
+  if(!msg) return;
+  const r = await fetch('/api/enquiry', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({lead_id:id, message:msg})});
+  const d = await r.json();
+  document.getElementById('quote-'+id).innerHTML = `<b>回复：</b>${d.reply}<br><br><b>报价初稿：</b>${d.quote_draft}<br><br><b>下一步：</b>${d.next_action}`;
 }
 async function mine(){
   const btn = document.getElementById('mineBtn');
-  btn.disabled = true; btn.textContent = '挖掘中…（约数十秒）';
-  try{
-    await fetch('/mine', {method:'POST'});
-    await load();
-  }finally{
-    btn.disabled = false; btn.textContent = '开始挖掘';
-  }
+  btn.disabled = true; btn.textContent = '挖掘中…（约 1~2 分钟）';
+  try{ await fetch('/mine',{method:'POST'}); await load(); }
+  finally{ btn.disabled = false; btn.textContent = '开始挖掘'; }
 }
 loadConfig(); load();
 </script>

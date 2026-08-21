@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>示例企业官网 · AI 客服</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --primary:#4f46e5; --text:#1f2329; --muted:#8a919c; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); }
+  .hero { background:linear-gradient(135deg,#1e1b4b,#4f46e5); color:#fff; text-align:center; padding:80px 24px; }
+  .hero h1 { font-size:34px; margin:0 0 10px; }
+  .hero p { color:#dbe2ff; margin:0; font-size:16px; }
+  .wrap { max-width:860px; margin:0 auto; padding:32px 16px; }
+  .intro { background:var(--card); border-radius:12px; padding:24px; margin-bottom:24px; }
+  .intro h2 { margin:0 0 12px; font-size:18px; }
+  .intro p { color:var(--muted); line-height:1.8; margin:0; }
+  .chat { background:var(--card); border-radius:12px; padding:16px; height:420px; display:flex; flex-direction:column; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .msgs { flex:1; overflow-y:auto; margin-bottom:12px; }
+  .msg { margin-bottom:10px; max-width:80%; padding:10px 12px; border-radius:10px; line-height:1.6; white-space:pre-wrap; }
+  .msg.ai { background:#eef1f6; align-self:flex-start; }
+  .msg.me { background:var(--primary); color:#fff; align-self:flex-end; margin-left:auto; }
+  .input-row { display:flex; gap:8px; }
+  .input-row input { flex:1; padding:12px; border:1px solid #d5d9e0; border-radius:8px; font-size:14px; }
+  button { padding:11px 18px; border:none; border-radius:8px; background:var(--primary); color:#fff; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="hero">
+  <h1>示例制造企业</h1>
+  <p>专注高品质示例产品，支持 OEM/ODM 定制</p>
+</div>
+<div class="wrap">
+  <div class="intro">
+    <h2>关于我们</h2>
+    <p>示例制造企业，具备研发与定制生产能力，服务品牌方、渠道商与 OEM 客户。欢迎咨询，我们的智能客服会为您解答产品与定制相关问题。</p>
+  </div>
+  <div class="chat">
+    <div class="msgs" id="msgs"><div class="msg ai">您好，我是智能客服，请问有什么可以帮您？</div></div>
+    <div class="input-row">
+      <input id="input" placeholder="输入您的问题…" onkeydown="if(event.key==='Enter')send()">
+      <button onclick="send()">发送</button>
+    </div>
+  </div>
+</div>
+<script>
+function add(role, text){
+  const box = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg ' + role; d.textContent = text;
+  box.appendChild(d); box.scrollTop = box.scrollHeight;
+}
+async function send(){
+  const inp = document.getElementById('input');
+  const text = inp.value.trim(); if(!text) return;
+  inp.value = ''; add('me', text);
+  try{
+    const r = await fetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:text})});
+    const d = await r.json(); add('ai', d.reply);
+  }catch(e){ add('ai', '出错了：'+e.message); }
+}
+</script>
+</body>
+</html>
