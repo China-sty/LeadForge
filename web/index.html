@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeadForge · AI 获客看板</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --primary:#4f46e5; --text:#1f2329; --muted:#8a919c; --grid:#e7eaf0; --ink:#5b6470; --good:#1a9c5b; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); }
+  .wrap { max-width:960px; margin:0 auto; padding:24px 16px; }
+  header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
+  h1 { font-size:22px; margin:0; }
+  .sub { color:var(--muted); font-size:13px; margin-top:4px; }
+  button { padding:11px 20px; border:none; border-radius:8px; background:var(--primary); color:#fff; font-size:14px; cursor:pointer; }
+  button:disabled { background:#b9c4e6; cursor:not-allowed; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px; }
+  .stat { background:var(--card); border-radius:12px; padding:18px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .stat .num { font-size:32px; font-weight:700; }
+  .stat .label { color:var(--muted); font-size:13px; }
+  .panel { background:var(--card); border-radius:12px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.06); margin-bottom:18px; }
+  .panel h2 { font-size:16px; margin:0 0 14px; }
+  .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .bar-name { width:80px; font-size:13px; text-align:right; flex-shrink:0; }
+  .bar-track { flex:1; height:10px; background:#eef0f3; border-radius:5px; overflow:hidden; }
+  .bar-fill { height:100%; background:var(--primary); border-radius:5px; }
+  .bar-count { width:30px; font-size:13px; color:var(--ink); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th,td { text-align:left; padding:10px 12px; border-bottom:1px solid #eef0f3; }
+  th { color:var(--muted); font-weight:500; }
+  .score { font-weight:700; }
+  .score.high { color:var(--good); }
+  .reason { color:var(--muted); font-size:12px; }
+  .hint { color:var(--muted); text-align:center; padding:30px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>LeadForge · AI 获客看板</h1>
+      <div class="sub" id="configSub">加载中…</div>
+    </div>
+    <button id="mineBtn" onclick="mine()">开始挖掘</button>
+  </header>
+
+  <div class="cards">
+    <div class="stat"><div class="num" id="total">-</div><div class="label">目标客户数</div></div>
+    <div class="stat"><div class="num" id="high">-</div><div class="label">高价值线索</div></div>
+    <div class="stat"><div class="num" id="avg">-</div><div class="label">平均分</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>行业分布</h2>
+    <div id="industries"><div class="hint">暂无数据</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>目标客户列表</h2>
+    <table>
+      <thead><tr><th>公司</th><th>行业</th><th>规模</th><th>匹配</th><th>采购</th><th>渠道</th><th>综合分</th><th>判断理由</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div id="empty" class="hint">点击右上角「开始挖掘」获取目标客户</div>
+  </div>
+</div>
+
+<script>
+async function loadConfig(){
+  const r = await fetch('/api/config'); const c = await r.json();
+  document.getElementById('configSub').textContent = `${c.enterprise} · ${c.products.join('、')} · 目标行业：${c.keywords.join('、')}`;
+}
+async function load(){
+  const [s, l] = await Promise.all([fetch('/api/stats').then(r=>r.json()), fetch('/api/leads').then(r=>r.json())]);
+  document.getElementById('total').textContent = s.total;
+  document.getElementById('high').textContent = s.high_value;
+  document.getElementById('avg').textContent = s.avg_score;
+  renderIndustries(s.industries);
+  renderLeads(l);
+}
+function renderIndustries(inds){
+  const box = document.getElementById('industries');
+  const entries = Object.entries(inds).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length){ box.innerHTML = '<div class="hint">暂无数据</div>'; return; }
+  const max = entries[0][1];
+  box.innerHTML = entries.map(([name,count]) => `
+    <div class="bar-row">
+      <span class="bar-name">${name}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${(count/max*100).toFixed(0)}%"></div></div>
+      <span class="bar-count">${count}</span>
+    </div>`).join('');
+}
+function renderLeads(leads){
+  const tbody = document.getElementById('tbody');
+  document.getElementById('empty').style.display = leads.length ? 'none':'block';
+  tbody.innerHTML = leads.map(l => `
+    <tr>
+      <td>${l.company_name}</td>
+      <td>${l.industry||'-'}</td>
+      <td>${l.scale||'-'}</td>
+      <td>${l.match_score!=null?l.match_score.toFixed(0):'-'}</td>
+      <td>${l.capability_score!=null?l.capability_score.toFixed(0):'-'}</td>
+      <td>${l.channel_score!=null?l.channel_score.toFixed(0):'-'}</td>
+      <td class="score ${l.total_score>=60?'high':''}">${l.total_score.toFixed(1)}</td>
+      <td class="reason">${l.reason||''}</td>
+    </tr>`).join('');
+}
+async function mine(){
+  const btn = document.getElementById('mineBtn');
+  btn.disabled = true; btn.textContent = '挖掘中…（约数十秒）';
+  try{
+    await fetch('/mine', {method:'POST'});
+    await load();
+  }finally{
+    btn.disabled = false; btn.textContent = '开始挖掘';
+  }
+}
+loadConfig(); load();
+</script>
+</body>
+</html>

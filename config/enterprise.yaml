@@ -1,0 +1,26 @@
+# 企业配置（多租户：每个企业一份配置，引擎通用）
+# 本文件为「脱敏示例」，演示用，不绑定任何真实企业
+
+enterprise:
+  name: "示例制造企业"
+  products: ["示例产品"]   # 演示用，非真实产品
+
+# 目标客户画像
+target_customer:
+  industry_keywords: ["健康理疗", "户外运动", "穿戴设备", "家纺", "消费电子"]
+  # 命中这些关键词之一，视为行业匹配
+  scale_prefer: ["小型", "中型", "大型"]   # 采购能力参考
+  region: "全国"
+
+# 线索评分维度与权重
+scoring:
+  dimensions:
+    - name: "行业匹配度"
+      weight: 0.4
+    - name: "采购能力"
+      weight: 0.3
+    - name: "渠道价值"
+      weight: 0.3
+  scale_min: 0
+  scale_max: 100
+  threshold: 60    # 高于此分为「高价值线索」
